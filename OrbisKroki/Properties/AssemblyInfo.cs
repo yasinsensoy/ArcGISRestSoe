@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
@@ -37,10 +36,10 @@ using System.Runtime.InteropServices;
 
 
 [assembly: ESRI.Server.SOESupport.AddInPackage("OrbisKroki", "89158157-359b-4417-9157-83c7424dfc89",
-    Author = "izambakci",
-    Company = "",
+    Author = "ysensoy",
+    Company = "Konumsal Bilgi Sistemleri",
     Date = "9/22/2022 1:33:46 PM",
-    Description = "",
+    Description = "Orbis Projesinde Servis üzerinden, Harita Krokileri almak için geliştirilmiştir.",
     TargetProduct = "Server",
     TargetVersion = "10.9",
     Version = "1.0")]

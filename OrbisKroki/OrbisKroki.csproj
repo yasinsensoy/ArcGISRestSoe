@@ -47,6 +47,9 @@
     </Reference>
     <Reference Include="ESRI.Server.SOESupport, Version=12.7.0.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86, processorArchitecture=MSIL">
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -56,11 +59,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\ContentType.cs" />
+    <Compile Include="Classes\CustomLayerInfo.cs" />
+    <Compile Include="Classes\Helper.cs" />
+    <Compile Include="Classes\KrokiRequest.cs" />
+    <Compile Include="Classes\KrokiSettings.cs" />
+    <Compile Include="Classes\LayoutDocument.cs" />
+    <Compile Include="Classes\LayoutElement.cs" />
+    <Compile Include="Classes\MapProperties.cs" />
+    <Compile Include="Classes\TilingScheme.cs" />
+    <Compile Include="Classes\Utility.cs" />
+    <Compile Include="Enums.cs" />
+    <Compile Include="Functionalities\FindNearest.cs" />
     <Compile Include="OrbisKroki.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Files\KrokiErrors\hata.ai" />
+    <None Include="Files\KrokiErrors\hata.eps" />
+    <None Include="Files\KrokiErrors\hata.pdf" />
     <None Include="mykey.snk" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Files\KrokiErrors\hata.bmp" />
+    <Content Include="Files\KrokiErrors\hata.emf" />
+    <Content Include="Files\KrokiErrors\hata.gif" />
+    <Content Include="Files\KrokiErrors\hata.jpg" />
+    <Content Include="Files\KrokiErrors\hata.png" />
+    <Content Include="Files\KrokiErrors\hata.svg" />
+    <Content Include="Files\KrokiErrors\hata.tif" />
   </ItemGroup>
   <PropertyGroup>
     <ZipFileExtension>soe</ZipFileExtension>
