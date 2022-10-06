@@ -11,11 +11,13 @@
 // 
 
 using ESRI.ArcGIS.Carto;
+using ESRI.ArcGIS.Display;
 using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geodatabase;
 using ESRI.ArcGIS.Geometry;
+using ESRI.ArcGIS.Output;
 using ESRI.ArcGIS.Server;
-using ESRI.Server.SOESupport;
+using ESRI.ArcGIS.SOESupport;
 using Newtonsoft.Json;
 using OrbisKroki.Classes;
 using OrbisKroki.Functionalities;
@@ -66,7 +68,7 @@ namespace OrbisKroki
         private IServerObjectHelper serverObjectHelper;
         private ServerLogger logger;
         private TilingScheme _tilingScheme = null;
-        private IMapServer ms;
+        private IMapServer3 ms;
         private IMapServerDataAccess mapServerDataAccess;
         private IMapLayerInfos layerInfos;
         public static IServerEnvironment2 serverEnvironment;
@@ -93,7 +95,7 @@ namespace OrbisKroki
             serverObjectHelper = pSOH;
             logger = new ServerLogger();
             mapServerDataAccess = (IMapServerDataAccess)serverObjectHelper.ServerObject;
-            ms = (IMapServer)mapServerDataAccess;
+            ms = (IMapServer3)mapServerDataAccess;
             IMapServerInfo mapServerInfo = ms.GetServerInfo(ms.DefaultMapName);
             layerInfos = mapServerInfo.MapLayerInfos;
             environmentProperties = GetEnvironmentProperties();
@@ -792,8 +794,10 @@ namespace OrbisKroki
                     SetDefinitionExpressions(pageLayoutActiveView.FocusMap, featureLayerDefinition.DefinitionExpression);
                     if (mapAutoExtentOptions.AutoExtentType == esriExtentTypeEnum.esriAutoExtentNone && featureLayerDefinition.DefinitionExpression != "1=2")
                     {
-                        IQueryFilter qfSelection = new QueryFilterClass();
-                        qfSelection.WhereClause = featureLayerDefinition.DefinitionExpression;
+                        IQueryFilter qfSelection = new QueryFilterClass
+                        {
+                            WhereClause = featureLayerDefinition.DefinitionExpression
+                        };
                         IFeatureSelection featureSelection = featureLayer as IFeatureSelection;
                         featureSelection.SelectFeatures(qfSelection, esriSelectionResultEnum.esriSelectionResultNew, false);
                         hasFeature = featureSelection.SelectionSet.Count > 0;
@@ -916,22 +920,13 @@ namespace OrbisKroki
         {
             IEnumLayer enumLayer = map.get_Layers(null, true);
             enumLayer.Reset();
-
-            ILayer layer = null;
+            ILayer layer;
             while ((layer = enumLayer.Next()) != null)
             {
-                if (layer is IFeatureLayer)
-                {
-                    IFeatureLayer featureLayer = layer as IFeatureLayer;
-                    if (featureLayer is IFeatureLayerDefinition)
-                    {
-                        IFeatureLayerDefinition featureLayerDefinition = featureLayer as IFeatureLayerDefinition;
+                if (layer is IFeatureLayer featureLayer)
+                    if (featureLayer is IFeatureLayerDefinition featureLayerDefinition)
                         if (!string.IsNullOrEmpty(featureLayerDefinition.DefinitionExpression) && featureLayerDefinition.DefinitionExpression.Contains("#definitionexpression#"))
-                        {
                             featureLayerDefinition.DefinitionExpression = featureLayerDefinition.DefinitionExpression.Replace("#definitionexpression#", " " + expression + " ");
-                        }
-                    }
-                }
             }
         }
         public static void ReleaseCOMObject(object o)
@@ -988,7 +983,7 @@ namespace OrbisKroki
             List<LayoutElement> elements = new List<LayoutElement>();
             IGraphicsContainer gc = pageLayout as IGraphicsContainer;
             gc.Reset();
-            IElement element = null;
+            IElement element;
             while ((element = gc.Next()) != null)
             {
                 IElementProperties ep = element as IElementProperties;
@@ -1056,7 +1051,6 @@ namespace OrbisKroki
             /* Exports the Active View of the document to selected output format. */
 
             string exportFileName = "_ags_Kroki-" + Guid.NewGuid().ToString().Replace("-", "");
-            string exportFilePath = "";
             // using predefined static member
             try
             {
@@ -1107,7 +1101,7 @@ namespace OrbisKroki
 
                 //set the export filename (which is the nameroot + the appropriate file extension)
                 exportFileName += "." + docExport.Filter.Split('.')[1].Split('|')[0].Split(')')[0];
-                exportFilePath = System.IO.Path.Combine(sOutputDir, exportFileName);
+                string exportFilePath = System.IO.Path.Combine(sOutputDir, exportFileName);
                 docExport.ExportFileName = exportFilePath;
 
                 //Output Image Quality of the export.  The value here will only be used if the export
@@ -1116,10 +1110,10 @@ namespace OrbisKroki
                 // 1 corresponds to "Best", 5 corresponds to "Fast"
 
                 // check if export is vector or raster
-                if (docExport is IOutputRasterSettings)
+                if (docExport is IOutputRasterSettings settings)
                 {
                     // for vector formats, assign the desired ResampleRatio to control drawing of raster layers at export time   
-                    RasterSettings = (IOutputRasterSettings)docExport;
+                    RasterSettings = settings;
                     RasterSettings.ResampleRatio = (int)lResampleRatio;
 
                     // NOTE: for raster formats output quality of the DISPLAY is set to 1 for image export 
@@ -1142,7 +1136,7 @@ namespace OrbisKroki
             long c = layerDescs.Count;
             for (int i = 0; i < c; i++)
             {
-                ILayerDescription layerDesc = layerDescs.get_Element(i);
+                ILayerDescription3 layerDesc = (ILayerDescription3)layerDescs.get_Element(i);
                 if (layerDesc.ID == layerID)
                 {
                     layerDesc.LayerResultOptions = new LayerResultOptionsClass();

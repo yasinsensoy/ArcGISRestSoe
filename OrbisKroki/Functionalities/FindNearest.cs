@@ -1,4 +1,5 @@
-﻿using ESRI.ArcGIS.Geodatabase;
+﻿using ESRI.ArcGIS.Carto;
+using ESRI.ArcGIS.Geodatabase;
 using ESRI.ArcGIS.Geometry;
 using System;
 using System.Collections.Generic;
@@ -26,9 +27,10 @@ namespace OrbisKroki.Functionalities
             };
             if (!string.IsNullOrEmpty(where))
             {
-                IQueryFilter qfilter = null;
-                qfilter = new QueryFilterClass();
-                qfilter.WhereClause = where;
+                IQueryFilter qfilter = new QueryFilterClass
+                {
+                    WhereClause = where
+                };
                 IFeatureCursor fcursor = fc.Search(qfilter, true);
                 fi.FeatureCursor = fcursor;
             }

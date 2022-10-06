@@ -35,7 +35,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 
-[assembly: ESRI.Server.SOESupport.AddInPackage("OrbisKroki", "89158157-359b-4417-9157-83c7424dfc89",
+[assembly: ESRI.ArcGIS.SOESupport.AddInPackage("OrbisKroki", "89158157-359b-4417-9157-83c7424dfc89",
     Author = "ysensoy",
     Company = "Konumsal Bilgi Sistemleri",
     Date = "9/22/2022 1:33:46 PM",

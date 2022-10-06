@@ -12,7 +12,7 @@
 
 using ESRI.ArcGIS.Carto;
 using ESRI.ArcGIS.Geometry;
-using ESRI.Server.SOESupport;
+using ESRI.ArcGIS.SOESupport;
 using System.Text;
 
 namespace OrbisKroki.Classes

@@ -1,4 +1,5 @@
-﻿using ESRI.ArcGIS.Geometry;
+﻿using ESRI.ArcGIS.Carto;
+using ESRI.ArcGIS.Geometry;
 
 namespace OrbisKroki.Classes
 {
@@ -30,13 +31,6 @@ namespace OrbisKroki.Classes
         public StorageFormat StorageFormat { get; set; }
         public int PacketSize { get; set; }
         public int DPI { get; set; }
-    }
-
-    public class LODInfo
-    {
-        public int LevelID { get; set; }
-        public double Scale { get; set; }
-        public double Resolution { get; set; }
     }
 
     public enum StorageFormat
