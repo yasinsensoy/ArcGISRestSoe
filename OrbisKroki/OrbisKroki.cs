@@ -58,7 +58,7 @@ namespace OrbisKroki
         private readonly Dictionary<int, IFeatureClass> idBasedIFeatureClasses = new Dictionary<int, IFeatureClass>();
         private readonly CultureInfo culture = new CultureInfo("en-us");
         private readonly IRESTRequestHandler reqHandler;
-        private const string krokiRootPath = @"C:\Orbis\Kroki\";
+        private const string krokiRootPath = @"\\ogmdata.ogm.gov.tr\Orbis\YeniOrbisRapor\orbis_harita\ORBIS\Kroki";
         private const string c_CapabilityGetInfo = "GetInfo";
         private const string c_CapabilityExportLayout = "ExportLayout";
         private Dictionary<string, string> environmentProperties = new Dictionary<string, string>();
@@ -1054,7 +1054,7 @@ namespace OrbisKroki
             // using predefined static member
             try
             {
-                
+
                 IExport docExport = null;
                 IPrintAndExport docPrintExport;
                 IOutputRasterSettings RasterSettings;
