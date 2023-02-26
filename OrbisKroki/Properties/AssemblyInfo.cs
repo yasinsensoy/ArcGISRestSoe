@@ -39,7 +39,7 @@ using System.Runtime.InteropServices;
 [assembly: AddInPackage("OrbisKroki", "89158157-359b-4417-9157-83c7424dfc89",
     Author = "ysensoy",
     Company = "Konumsal Bilgi Sistemleri",
-    Date = "9/22/2022 1:33:46 PM",
+    Date = "2/25/2023 1:12:46 PM",
     Description = "Orbis Projesinde Servis üzerinden, Harita Krokileri almak için geliştirilmiştir.",
     TargetProduct = "Server",
     TargetVersion = "10.9",

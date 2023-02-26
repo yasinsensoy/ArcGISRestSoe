@@ -45,10 +45,11 @@ namespace OrbisKroki
     [ClassInterface(ClassInterfaceType.None)]
     [ServerObjectExtension("MapServer",
         AllCapabilities = "GetInfo,ExportLayout",
-        DefaultCapabilities = "GetInfo",
+        DefaultCapabilities = "GetInfo,ExportLayout",
         Description = "Orbis Projesinde Servis üzerinden, Harita Krokileri almak için geliştirilmiştir.",
         DisplayName = "SOE Orbis Kroki Projesi",
-        Properties = "serverName=cbsorbis.ogm.gov.tr;orbisRestUrlTemplate=https://{0}/orbis/;defaultReferer=https://orbis.ogm.gov.tr/orbis;geoportalRestPath=rest/GeoPortalRS/;ortakRestPath=rest/ortakRS/;useDynamicTile=false;",
+        HasManagerPropertiesConfigurationPane = true,
+        Properties = "useDynamicTile=false;useProxy=false;proxy=http://orbis.ogm.gov.tr/orbis/orbis/proxy?;outputPath=\\\\ogmdata.ogm.gov.tr\\Orbis\\YeniOrbisRapor\\orbis_harita\\ORBIS\\orbisoutput;krokiRootPath=\\\\ogmdata.ogm.gov.tr\\Orbis\\YeniOrbisRapor\\orbis_harita\\ORBIS\\Kroki",
         SupportsREST = true,
         SupportsSOAP = false,
         SupportsSharedInstances = false)]
@@ -58,25 +59,24 @@ namespace OrbisKroki
         private readonly Dictionary<int, IFeatureClass> idBasedIFeatureClasses = new Dictionary<int, IFeatureClass>();
         private readonly CultureInfo culture = new CultureInfo("en-us");
         private readonly IRESTRequestHandler reqHandler;
-        private const string krokiRootPath = @"\\ogmdata.ogm.gov.tr\Orbis\YeniOrbisRapor\orbis_harita\ORBIS\Kroki";
         private const string c_CapabilityGetInfo = "GetInfo";
         private const string c_CapabilityExportLayout = "ExportLayout";
         private Dictionary<string, string> environmentProperties = new Dictionary<string, string>();
-        private string physicalOutputDirectory = "";
-        private string serviceRestOutputUrlBase = "";
-        private IPropertySet configurationPropertiesSet;
         private IServerObjectHelper serverObjectHelper;
         private ServerLogger logger;
         private TilingScheme _tilingScheme = null;
         private IMapServer3 ms;
         private IMapServerDataAccess mapServerDataAccess;
         private IMapLayerInfos layerInfos;
-        public static IServerEnvironment2 serverEnvironment;
-        public static string serverName = "";
-        public static string defaultReferer = "";
-        public static string geoportalRestPath = "rest/GeoPortalRS/";
-        public static string ortakRestPath = "rest/ortakRS/";
-        public static bool useDynamicTile = false; //true:uses dynamic export,false:uses cached map service images
+        private IServerEnvironment2 serverEnvironment;
+        private bool useDynamicTile = false;
+        private bool useProxy = false;
+        private string krokiRootPath = @"\\ogmdata.ogm.gov.tr\Orbis\YeniOrbisRapor\orbis_harita\ORBIS\Kroki";
+        private string outputPath = @"\\ogmdata.ogm.gov.tr\Orbis\YeniOrbisRapor\orbis_harita\ORBIS\orbisoutput"; // C:\arcgisserver\directories\arcgisoutput
+        private string proxy = "http://orbis.ogm.gov.tr/orbis/orbis/proxy?";
+        private string restUrl;
+        private string cfgName;
+        private string cfgType;
 
         public OrbisKroki()
         {
@@ -84,10 +84,6 @@ namespace OrbisKroki
             logger = new ServerLogger();
             reqHandler = new SoeRestImpl(soe_name, CreateRestSchema());
         }
-
-        public TilingScheme tilingScheme => _tilingScheme ?? ReadGoogleMapsTilingScheme(out _tilingScheme);
-
-        public string GetServiceKrokiPath => System.IO.Path.Combine(krokiRootPath, environmentProperties["CfgName"].Replace(@"/", @"\"));
 
         #region IServerObjectExtension Members
         public void Init(IServerObjectHelper pSOH)
@@ -99,8 +95,14 @@ namespace OrbisKroki
             IMapServerInfo mapServerInfo = ms.GetServerInfo(ms.DefaultMapName);
             layerInfos = mapServerInfo.MapLayerInfos;
             environmentProperties = GetEnvironmentProperties();
-            serviceRestOutputUrlBase = GetServiceRestOutputUrlBase;
-            physicalOutputDirectory = GetPhysicalRestOutputFolder;
+            restUrl = environmentProperties["RestURL"].ToLower(culture).
+                Replace(":6080", "").
+                Replace(":6484", "").
+                Replace("cbsogm.ogm.gov.tr", "gis.ogm.gov.tr").
+                Replace("cbsogmpassive.ogm.gov.tr", "gis.ogm.gov.tr").
+                Replace("/arcgis", "/server");
+            cfgName = environmentProperties["CfgName"];
+            cfgType = environmentProperties["CfgType"];
             logger.LogMessage(ServerLogger.msgType.infoStandard, soe_name + ".init()", 200, "Initialized " + soe_name + " SOE.");
         }
 
@@ -113,27 +115,25 @@ namespace OrbisKroki
             layerInfos = null;
         }
 
-        public string GetPhysicalRestOutputFolder => @"C:\arcgisserver\directories\arcgisoutput\" + environmentProperties["CfgName"] + "_" + environmentProperties["CfgType"];
+        public TilingScheme TilingScheme => _tilingScheme ?? ReadGoogleMapsTilingScheme(out _tilingScheme);
 
-        public string GetServiceRestOutputUrlBase => $"{environmentProperties["RestURL"]}/directories/arcgisoutput/{environmentProperties["CfgName"]}_{environmentProperties["CfgType"]}".Replace(":6443", "");
+        public string GetServiceKrokiPath => System.IO.Path.Combine(krokiRootPath, cfgName);
 
-        public string GetServiceRestUrlBase => $"{environmentProperties["RestURL"]}/services/{environmentProperties["CfgName"]}/{environmentProperties["CfgType"]}/".Replace(":6443", "");
+        public string GetPhysicalRestOutputFolder => System.IO.Path.Combine(outputPath, $"{cfgName}_{cfgType}");
+
+        public string GetServiceRestOutputUrlBase => $"{(useProxy ? proxy : "")}{restUrl}/directories/{System.IO.Path.GetFileName(outputPath)}/{cfgName}_{cfgType}";
+
+        public string GetServiceRestUrlBase => $"{restUrl}/services/{cfgName}/{cfgType}/";
         #endregion
 
         #region IObjectConstruct Members
         public void Construct(IPropertySet props)
         {
-            configurationPropertiesSet = props;
-            if (props.GetProperty("serverName") != null)
-                serverName = props.GetProperty("serverName").ToString();
-            if (props.GetProperty("defaultReferer") != null)
-                defaultReferer = props.GetProperty("defaultReferer").ToString();
-            if (props.GetProperty("geoportalRestPath") != null)
-                geoportalRestPath = props.GetProperty("geoportalRestPath").ToString();
-            if (props.GetProperty("ortakRestPath") != null)
-                ortakRestPath = props.GetProperty("ortakRestPath").ToString();
-            if (props.GetProperty("useDynamicTile") != null && !bool.TryParse(props.GetProperty("useDynamicTile").ToString(), out useDynamicTile))
-                useDynamicTile = false;
+            bool.TryParse((string)props.GetProperty("useDynamicTile"), out useDynamicTile);
+            bool.TryParse((string)props.GetProperty("useProxy"), out useProxy);
+            outputPath = (string)props.GetProperty("outputPath");
+            krokiRootPath = (string)props.GetProperty("krokiRootPath");
+            proxy = (string)props.GetProperty("proxy");
         }
         #endregion
 
@@ -313,17 +313,17 @@ namespace OrbisKroki
             byte[] responseImage = null;
             if (useDynamicTile)
             {
-                Utility.CalculateBBox(tilingScheme.TileOrigin, tilingScheme.LODs[level].Resolution, tilingScheme.TileRows, tilingScheme.TileCols, row, column, out double xmin, out double ymin, out double xmax, out double ymax);
-                int tileRows = tilingScheme.TileRows;
-                int tileCols = tilingScheme.TileCols;
-                string format = tilingScheme.CacheTileFormat.ToString().ToUpper().Contains("PNG") ? tilingScheme.CacheTileFormat.ToString() : "jpg";
+                Utility.CalculateBBox(TilingScheme.TileOrigin, TilingScheme.LODs[level].Resolution, TilingScheme.TileRows, TilingScheme.TileCols, row, column, out double xmin, out double ymin, out double xmax, out double ymax);
+                int tileRows = TilingScheme.TileRows;
+                int tileCols = TilingScheme.TileCols;
+                string format = TilingScheme.CacheTileFormat.ToString().ToUpper().Contains("PNG") ? TilingScheme.CacheTileFormat.ToString() : "jpg";
                 StringBuilder queryString = new StringBuilder();
-                queryString.Append("dpi=" + tilingScheme.DPI + "&");
+                queryString.Append("dpi=" + TilingScheme.DPI + "&");
                 queryString.Append("transparent=true" + "&");
                 queryString.Append("format=" + format + "&");
                 queryString.AppendFormat("bbox={0}%2C{1}%2C{2}%2C{3}&", xmin.ToString(culture), ymin.ToString(culture), xmax.ToString(culture), ymax.ToString(culture));
-                queryString.Append("bboxSR=" + tilingScheme.WKID + "&");
-                queryString.Append("imageSR=" + tilingScheme.WKID + "&");
+                queryString.Append("bboxSR=" + TilingScheme.WKID + "&");
+                queryString.Append("imageSR=" + TilingScheme.WKID + "&");
                 queryString.Append("size=" + tileCols + "%2C" + tileRows + "&");
                 queryString.Append("f=image");
                 string uri = GetServiceRestUrlBase.Replace("https", "http") + "export?" + queryString;
@@ -353,22 +353,6 @@ namespace OrbisKroki
                 responseImage = webClient.DownloadData(GetServiceRestUrlBase + "tile/" + level + "/" + row + "/" + column);
             }
             return responseImage;
-        }
-
-        private SourceTypeEnum? GetServiceType(string serviceType)
-        {
-            SourceTypeEnum? typeEnum = null;
-            switch (serviceType.ToLower())
-            {
-                case "mapserver":
-                    typeEnum = SourceTypeEnum.MAPSERVICE;
-                    break;
-                case "featureserver":
-                    typeEnum = SourceTypeEnum.FEATURESERVICE;
-                    break;
-                default: break;
-            }
-            return typeEnum;
         }
 
         private byte[] GetLayoutDocumentsOperationHandler(NameValueCollection boundVariables, JsonObject operationInput, string outputFormat, string requestProperties, out string responseProperties)
@@ -594,21 +578,6 @@ namespace OrbisKroki
             return m_fcToQuery;
         }
 
-        private IMapLayerInfo GetLayerInfo(int layerID)
-        {
-            if (layerID < 0)
-                throw new ArgumentOutOfRangeException("layerID");
-            IMapLayerInfo layerInfo = null;
-            long c = layerInfos.Count;
-            for (int i = 0; i < c; i++)
-            {
-                layerInfo = layerInfos.get_Element(i);
-                if (layerInfo.ID == layerID)
-                    break;
-            }
-            return layerInfo;
-        }
-
         private CustomLayerInfo GetCustomLayerInfo(int layerID)
         {
             if (layerID < 0)
@@ -635,6 +604,7 @@ namespace OrbisKroki
             }
             return customLayerInfos;
         }
+
         protected TilingScheme ReadGoogleMapsTilingScheme(out TilingScheme tilingScheme)
         {
             tilingScheme = new TilingScheme();
@@ -686,7 +656,7 @@ namespace OrbisKroki
             string rootLayoutFolderPath = (isGeneralLayout) ? "GenelKrokiler" : request.LayerId.ToString();
             string mxdFilePath = GetMxdPath(rootLayoutFolderPath, request.KrokiName, request.OutputFileExtension.ToString().ToLower(), out bool hasError);
             if (hasError)
-                outputFilePath = serviceRestOutputUrlBase + "/" + mxdFilePath;
+                outputFilePath = GetServiceRestOutputUrlBase + "/" + mxdFilePath;
             else
             {
                 IMapDocument mapDocument = new MapDocumentClass();
@@ -714,7 +684,6 @@ namespace OrbisKroki
                 else
                 {
                     ILayer layer = pageLayoutActiveView.FocusMap.get_Layer(request.MapLayerIndex);
-                    IDisplayRelationshipClass displayRelationshipClass = layer as IDisplayRelationshipClass;
                     IFeatureLayer featureLayer = layer as IFeatureLayer;
                     IFeatureClass featureClass = featureLayer.FeatureClass;
                     if (featureClass == null)
@@ -728,7 +697,7 @@ namespace OrbisKroki
                         else
                         {
                             string seperator = "";
-                            if (displayRelationshipClass != null && request.FilterFieldName.Contains("."))
+                            if (layer is IDisplayRelationshipClass displayRelationshipClass && request.FilterFieldName.Contains("."))
                             {
                                 IObjectClass origin = displayRelationshipClass.RelationshipClass.OriginClass;
                                 IObjectClass destination = displayRelationshipClass.RelationshipClass.DestinationClass;
@@ -892,9 +861,9 @@ namespace OrbisKroki
                 activeView.Refresh();
                 pageLayoutActiveView.Refresh();
 
-                fileName = ExportActiveViewParameterized(pageLayoutActiveView, 300, 1, request.OutputFileExtension, physicalOutputDirectory, false);
-                outputFilePath = serviceRestOutputUrlBase + "/" + fileName;
-                outputFilePath = outputFilePath.ToLower(new CultureInfo("en-US")).Replace("cbsorbis.ogm.gov.tr", "orbiscbs.ogm.gov.tr");
+                fileName = ExportActiveViewParameterized(pageLayoutActiveView, 300, 1, request.OutputFileExtension, GetPhysicalRestOutputFolder, false);
+                outputFilePath = GetServiceRestOutputUrlBase + "/" + fileName;
+                outputFilePath = outputFilePath.ToLower(culture);
             }
             byte[] retValue = Encoding.UTF8.GetBytes("{\"outputFilePath\":\"" + outputFilePath + "\"}");
             return retValue;
@@ -1014,24 +983,12 @@ namespace OrbisKroki
                 hasError = true;
                 string errorFileName = "hata." + outputExtension;
                 string copyFilePath = System.IO.Path.Combine(errorPagesDirectory, errorFileName);
-                DirectoryInfo di = new DirectoryInfo(physicalOutputDirectory);
-                string outputFilePath = System.IO.Path.Combine(physicalOutputDirectory, "_ags_KrokiError-" + errorFileName);
+                string outputFilePath = System.IO.Path.Combine(GetPhysicalRestOutputFolder, "_ags_KrokiError-" + errorFileName);
                 if (!File.Exists(outputFilePath))
                     File.Copy(copyFilePath, outputFilePath);
                 mxdFilePath = "_ags_KrokiError-" + errorFileName;
             }
             return mxdFilePath;
-        }
-
-        private string GetFeatureNotFoundedLayout(string outputExtension)
-        {
-            string errorPagesDirectory = System.IO.Path.Combine(GetServiceKrokiPath, @"Files\KrokiEmpties");
-            string errorFileName = "Empty" + "." + outputExtension;
-            string copyFilePath = System.IO.Path.Combine(errorPagesDirectory, errorFileName);
-            string outputFilePath = System.IO.Path.Combine(physicalOutputDirectory, "_ags_KrokiEmpty-" + errorFileName);
-            if (!File.Exists(outputFilePath))
-                File.Copy(copyFilePath, outputFilePath);
-            return "_ags_KrokiEmpty-" + errorFileName;
         }
 
         private string ExportActiveViewParameterized(IActiveView docActiveView, long iOutputResolution, long lResampleRatio, ContentTypeFileExtensionEnum ExportType, string sOutputDir, bool bClipToGraphicsExtent)
@@ -1128,24 +1085,6 @@ namespace OrbisKroki
                 throw ex;
             }
             return exportFileName;
-        }
-
-        private IMapTableDescription GetTableDesc(int layerID)
-        {
-            ILayerDescriptions layerDescs = ms.GetServerInfo(ms.DefaultMapName).DefaultMapDescription.LayerDescriptions;
-            long c = layerDescs.Count;
-            for (int i = 0; i < c; i++)
-            {
-                ILayerDescription3 layerDesc = (ILayerDescription3)layerDescs.get_Element(i);
-                if (layerDesc.ID == layerID)
-                {
-                    layerDesc.LayerResultOptions = new LayerResultOptionsClass();
-                    layerDesc.LayerResultOptions.GeometryResultOptions = new GeometryResultOptionsClass();
-                    layerDesc.LayerResultOptions.GeometryResultOptions.DensifyGeometries = true;
-                    return (IMapTableDescription)layerDesc;
-                }
-            }
-            throw new ArgumentOutOfRangeException("layerID");
         }
         #endregion
 
