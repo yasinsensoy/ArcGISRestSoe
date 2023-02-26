@@ -155,6 +155,12 @@ namespace OrbisKroki
         {
             RestResource soeResource = new RestResource(soe_name, false, RootResHandler, c_CapabilityGetInfo);
 
+            RestResource propertiesResource = new RestResource("Properties", false, PropertiesResHandler);
+            soeResource.resources.Add(propertiesResource);
+
+            RestResource serverEnvironmentResource = new RestResource("ServerEnvironment", false, ServerEnvironmentResHandler);
+            soeResource.resources.Add(serverEnvironmentResource);
+
             RestOperation getLayoutDocumentsOperation = new RestOperation("GetLayoutDocuments", new string[] { "returnGeneral", "layerId" }, new string[] { "json" }, GetLayoutDocumentsOperationHandler, c_CapabilityGetInfo);
             soeResource.operations.Add(getLayoutDocumentsOperation);
 
@@ -192,6 +198,27 @@ namespace OrbisKroki
             result.AddArray("CustomLayers", jos);
             string json = result.ToJson();
             return Encoding.UTF8.GetBytes(json);
+        }
+
+        private byte[] PropertiesResHandler(NameValueCollection boundVariables, string outputFormat, string requestProperties, out string responseProperties)
+        {
+            responseProperties = "{\"Content-Type\" : \"application/json\"}";
+            JsonObject result = new JsonObject();
+            result.AddBoolean("useDynamicTile", useDynamicTile);
+            result.AddBoolean("useProxy", useProxy);
+            result.AddString("proxy", proxy);
+            result.AddString("outputPath", outputPath);
+            result.AddString("krokiRootPath", krokiRootPath);
+            return Encoding.UTF8.GetBytes(result.ToJson());
+        }
+
+        private byte[] ServerEnvironmentResHandler(NameValueCollection boundVariables, string outputFormat, string requestProperties, out string responseProperties)
+        {
+            responseProperties = "{\"Content-Type\" : \"application/json\"}";
+            JsonObject result = new JsonObject();
+            foreach (var item in environmentProperties)
+                result.AddString(item.Key, item.Value);
+            return Encoding.UTF8.GetBytes(result.ToJson());
         }
 
         private byte[] CustomLayerHandler(NameValueCollection boundVariables, string outputFormat, string requestProperties, out string responseProperties)

@@ -101,6 +101,12 @@
     <Content Include="Files\KrokiErrors\hata.png" />
     <Content Include="Files\KrokiErrors\hata.svg" />
     <Content Include="Files\KrokiErrors\hata.tif" />
+    <AddInContent Include="Resources\OrbisKroki\OrbisKroki\Config.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AddInContent>
+    <AddInContent Include="Resources\OrbisKroki\OrbisKroki\OrbisKrokiPropertiesPane.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AddInContent>
   </ItemGroup>
   <PropertyGroup>
     <ZipFileExtension>soe</ZipFileExtension>
