@@ -19,8 +19,8 @@ using ESRI.ArcGIS.Output;
 using ESRI.ArcGIS.Server;
 using ESRI.ArcGIS.SOESupport;
 using Newtonsoft.Json;
-using OrbisKroki.Classes;
-using OrbisKroki.Functionalities;
+using OrbisKrokiTest.Classes;
+using OrbisKrokiTest.Functionalities;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -38,7 +38,7 @@ using System.Threading;
 //      this is strongly suggested if the dll will be registered using regasm.exe <your>.dll /codebase
 
 
-namespace OrbisKroki
+namespace OrbisKrokiTest
 {
     [ComVisible(true)]
     [Guid("8cee4b75-9ba9-40f1-b54a-a35a68a1b67a")]
@@ -53,7 +53,7 @@ namespace OrbisKroki
         SupportsREST = true,
         SupportsSOAP = false,
         SupportsSharedInstances = false)]
-    public class OrbisKroki : IServerObjectExtension, IObjectConstruct, IRESTRequestHandler
+    public class OrbisKrokiTest : IServerObjectExtension, IObjectConstruct, IRESTRequestHandler
     {
         private readonly string soe_name;
         private readonly Dictionary<int, IFeatureClass> idBasedIFeatureClasses = new Dictionary<int, IFeatureClass>();
@@ -78,7 +78,7 @@ namespace OrbisKroki
         private string cfgName;
         private string cfgType;
 
-        public OrbisKroki()
+        public OrbisKrokiTest()
         {
             soe_name = GetType().Name;
             logger = new ServerLogger();

@@ -1,0 +1,31 @@
+<div dojoAttachPoint="containerNode">
+    <table>
+        <tbody>
+            <tr>
+                <td>Proxy Kullan:</td>
+                <td><input dojoType="dijit.form.CheckBox" dojoAttachPoint="_useProxyCheckBox" /></td>
+            </tr>
+            <tr>
+                <td>Proxy Url:</td>
+                <td><input dojoType="dijit.form.ValidationTextBox" required="false" dojoAttachPoint="_proxyTextBox" /></td>
+            </tr>
+            <tr>
+                <td>Kroki Ana Klas&#246;r Yolu:</td>
+                <td><input dojoType="dijit.form.ValidationTextBox" required="true" dojoAttachPoint="_krokiRootPathTextBox" /></td>
+            </tr>
+            <tr>
+                <td>&#199;&#305;kt&#305; Klas&#246;r&#252;:</td>
+                <td>
+                    <select dojoType="dijit.form.Select" required="true" dojoAttachPoint="_outputPathSelect">
+                        <option value="\\ogmdata.ogm.gov.tr\Orbis\YeniOrbisRapor\orbis_harita\ORBIS\orbisoutput">\\ogmdata.ogm.gov.tr\Orbis\YeniOrbisRapor\orbis_harita\ORBIS\orbisoutput</option>
+                        <option value="C:\arcgisserver\directories\arcgisoutput">C:\arcgisserver\directories\arcgisoutput</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Dinamik Tile Kullan:</td>
+                <td><input dojoType="dijit.form.CheckBox" dojoAttachPoint="_useDynamicTileCheckBox" /></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
